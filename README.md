@@ -93,3 +93,25 @@ Quick Summary
 ~: Only small updates (like fixing bugs).
 ^: Small and medium updates (like adding new features).
 Use ~ for safety and ^ for more options!
+
+# Point 6
+
+CommonJS Modules
+Syntax: Uses require() for importing and module.exports for exporting.
+Loading: Synchronous loading; modules are loaded when the code is executed.
+Usage: Primarily used in Node.js environments.
+File Extension: Typically uses .js extension.
+Scope: Each module has its own scope; no global scope pollution.
+Dynamic: Can use variables in require() calls for dynamic imports.
+ECMAScript Modules
+Syntax: Uses import and export statements.
+Loading: Asynchronous loading; designed for use in both browsers and Node.js.
+Usage: Standardized in JavaScript and can be used in both client-side and server-side code.
+File Extension: Often uses .mjs or .js (with "type": "module" in package.json).
+Scope: Each module has its own scope, preventing global namespace pollution.
+Static Structure: Imports must be at the top level, allowing for static analysis and tree-shaking.
+Key Differences
+Loading Method: CommonJS is synchronous; ES modules are asynchronous.
+Import/Export Syntax: Different keywords and structure for defining modules.
+Use Cases: CommonJS is mainly for Node.js; ES modules are for both browsers and Node.js.
+Dynamic Import: CommonJS allows dynamic imports, while ES modules use import() for asynchronous loading.
