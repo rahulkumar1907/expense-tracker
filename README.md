@@ -6,7 +6,7 @@ to track expenses
 
 package.json file you provided is a configuration file used in Node.js projects.
 It includes important metadata about the project, as well as its dependencies and scripts
-name: "project" - This is the name of your project. It should be unique if you plan to publish it to a package registry.
+name: "expense-tracker" - This is the name of your project. It should be unique if you plan to publish it to a package registry.
 
 version: "1.0.0" - This specifies the version of your project, following semantic versioning (major.minor.patch).
 
@@ -67,3 +67,16 @@ Reduce Repository Size: The node_modules directory can be very large, containing
 Environment Consistency: When developers clone your repository, they can run npm install to install the required packages listed in package.json, ensuring that everyone is working with the same dependencies without needing to include the actual node_modules folder.
 
 Simplified Collaboration: With .gitignore, team members won’t accidentally commit local configurations or unnecessary files. This helps maintain a clean and consistent codebase.
+
+# Point 4.
+
+The package-lock.json file is an automatically generated file that is created when you run npm install in a Node.js project that uses npm (Node Package Manager). It serves several important purposes:
+
+Key Features of package-lock.json
+Dependency Locking: The package-lock.json file locks the versions of your project's dependencies and their dependencies (transitive dependencies). This ensures that everyone working on the project (or any deployment environments) uses the exact same versions of each package, preventing inconsistencies that could lead to bugs.
+
+Faster Installations: When you run npm install, npm can use the package-lock.json file to install dependencies more quickly. It does this by skipping the version resolution step, as it already knows the exact versions to install.
+
+Detailed Dependency Tree: The file contains a detailed structure of the dependency tree, including the resolved versions of each package, the package source (e.g., registry URL), and any package integrity checks (hashes) to ensure the packages haven't been tampered with.
+
+Automatic Creation and Updates: The package-lock.json file is created automatically when you first install dependencies and is updated whenever you add or update packages with npm. You should avoid manually editing this file.
