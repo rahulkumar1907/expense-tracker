@@ -80,3 +80,16 @@ Faster Installations: When you run npm install, npm can use the package-lock.jso
 Detailed Dependency Tree: The file contains a detailed structure of the dependency tree, including the resolved versions of each package, the package source (e.g., registry URL), and any package integrity checks (hashes) to ensure the packages haven't been tampered with.
 
 Automatic Creation and Updates: The package-lock.json file is created automatically when you first install dependencies and is updated whenever you add or update packages with npm. You should avoid manually editing this file.
+
+# Point 5.
+
+Tilde (~)
+Example: "~2.1.34"
+What it means: You can update to newer versions that only fix bugs. So, it allows versions like 2.1.35 but not 2.2.0.
+Caret (^)
+Example: "^16.4.5"
+What it means: You can update to newer versions that add new features or fix bugs. So, it allows versions like 16.4.6 and 16.5.0, but not 17.0.0.
+Quick Summary
+~: Only small updates (like fixing bugs).
+^: Small and medium updates (like adding new features).
+Use ~ for safety and ^ for more options!
