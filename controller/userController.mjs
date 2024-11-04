@@ -29,6 +29,13 @@ const createUser = async (req, res) => {
   try {
     const { name, email, password, age, title } = req.body;
 
+    const existingUser = await userModel.findOne({ email: req.body.email });
+    if (existingUser) {
+      return res
+        .status(409)
+        .send({ status: false, message: "User already exist" });
+    }
+
     // Hash the password
     const hashedPassword = await hash(password, 10);
 
