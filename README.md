@@ -1,6 +1,6 @@
 # expense-tracker
-to track expenses
 
+to track expenses
 
 Points : -
 
@@ -28,3 +28,21 @@ dependencies:
 
 This section lists the packages that your project depends on to run.
 In this example, it includes "express": "^4.21.1", which means your project depends on version 4.21.1 of the Express framework or any compatible version that is greater than or equal to 4.21.1 but less than 5.0.0.
+
+Point 2.
+Mongoose is an Object Data Modeling (ODM) library for MongoDB and Node.js. It provides a straightforward way to interact with MongoDB databases by allowing developers to define schemas for their data, create models based on those schemas, and perform various database operations such as querying, updating, and deleting records.
+
+Key Features of Mongoose:
+Schema Definition: Mongoose allows you to define a schema for your data, specifying the structure and data types for each field. This helps enforce data consistency.
+
+Model Creation: Once a schema is defined, you can create a model that represents a collection in your MongoDB database. This model can be used to create, read, update, and delete documents.
+
+Validation: Mongoose provides built-in validation for schema fields, allowing you to ensure that data meets specific criteria before it's saved to the database.
+
+Middleware: You can define middleware functions that can run before or after certain operations, such as validation or saving documents. This is useful for tasks like logging or modifying data.
+
+Querying: Mongoose provides a rich query API that allows you to perform complex queries easily, including filtering, sorting, and pagination.
+
+Population: Mongoose supports population, which allows you to reference documents in other collections and automatically replace the references with the actual documents.
+
+Plugins: Mongoose supports plugins, which enable you to extend its functionality with reusable features.
