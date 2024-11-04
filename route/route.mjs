@@ -1,8 +1,8 @@
 import express from "express";
-import { createUser } from "../controller/userController.mjs"; 
+import { validateUser, createUser } from "../controller/userController.mjs"; 
 
 const router = express.Router();
 
-router.post("/create-user", createUser); // Use createUser directly since it is destructured
+router.post("/create-user", validateUser, createUser);
 
 export default router;
