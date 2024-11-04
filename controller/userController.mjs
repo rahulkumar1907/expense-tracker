@@ -15,13 +15,13 @@ const createUser = async (req, res) => {
     const hashedPassword = await hash(password, 10);
 
     // Create a new user instance
-    const newUser = new User({
+    const newUser = {
       name,
       email,
       password: hashedPassword, // Save the hashed password
       age,
       title,
-    });
+    };
 
     const savedUser = await userModel.create(newUser);
 

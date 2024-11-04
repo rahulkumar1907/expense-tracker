@@ -8,7 +8,7 @@ const validateUser = [
     .withMessage("Password must be at least 6 characters"),
   body("age")
     .optional()
-    .isInt({ min: 0 })
+    .isInt({ gt: 0, lt: 100 })
     .withMessage("Age must be a non-negative integer"),
   body("title")
     .optional()
