@@ -1,12 +1,11 @@
-import { validationResult } from 'express-validator';
-import userModel from '../models/userModel';
-import { hash } from 'bcrypt'; 
+import { validationResult } from "express-validator";
+import userModel from "../model/userModel.mjs";
+import { hash } from "bcrypt";
 
 const createUser = async (req, res) => {
- 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).send({status:false, message: errors.array() });
+    return res.status(400).send({ status: false, message: errors.array() });
   }
 
   try {
@@ -26,11 +25,16 @@ const createUser = async (req, res) => {
 
     const savedUser = await userModel.create(newUser);
 
-    return res.status(201).send({status:true,data:savedUser,message:"User created successfully"});
+    return res.status(201).send({
+      status: true,
+      data: savedUser,
+      message: "User created successfully",
+    });
   } catch (error) {
-    return res.status(500).json({ status:false,message: 'Internal server error' });
+    return res
+      .status(500)
+      .json({ status: false, message: "Internal server error" });
   }
 };
-
 
 export { createUser };
