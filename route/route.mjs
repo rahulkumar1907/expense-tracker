@@ -6,6 +6,8 @@ import {
   refreshAccessToken,
 } from "../controller/userController.mjs";
 
+import { authenticate } from "../middleware/auth.mjs";
+
 const router = express.Router();
 
 router.post("/create-user", validateUser, createUser);

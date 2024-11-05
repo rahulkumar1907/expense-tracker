@@ -2,11 +2,12 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRoutes from "./route/route.mjs";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 
 const app = express();
-
+app.use(cookieParser());
 // Middleware to parse JSON bodies
 app.use(express.json());
 import { createClient } from "redis";

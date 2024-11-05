@@ -1,9 +1,7 @@
 import { validationResult, body } from "express-validator";
 import userModel from "../model/userModel.mjs";
 import { hash } from "bcrypt";
-import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-dotenv.config();
 
 // Define the validation rules
 const validateUser = [
