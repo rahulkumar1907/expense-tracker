@@ -181,3 +181,177 @@ return res.status(403).send('Forbidden');
 } 5. Multi-factor Authentication (MFA):
 For actions that have high security risks (e.g., changing passwords or making financial transactions), use multi-factor authentication to ensure that the user explicitly authorizes the action.
 Even if a CSRF attack manages to trigger a request, the attacker would still need to pass an additional layer of authentication (e.g., a code sent to the user's phone).
+
+# Point 8 DDoS Attack
+What is a DDoS Attack?
+A DDoS (Distributed Denial of Service) attack aims to disrupt a service by overwhelming it with a flood of traffic from multiple sources. The goal is to exhaust the target's resources (bandwidth, CPU, or memory), causing it to become slow or unavailable.
+
+Types of DDoS Attacks:
+Volumetric Attacks: Flooding with massive traffic (e.g., UDP floods).
+Protocol Attacks: Exploiting protocol weaknesses (e.g., SYN floods).
+Application Layer Attacks: Overloading web applications (e.g., HTTP floods).
+How DDoS Attacks Work:
+Botnets: Attackers control a network of infected devices (botnets) to send traffic to the target.
+Amplification: Attacks can use techniques to amplify traffic volume (e.g., DNS amplification).
+DDoS Impact:
+Service downtime: Makes websites or services unavailable.
+Financial loss: Costs from downtime, recovery, and reputation damage.
+Operational disruption: Requires manual intervention or third-party services to mitigate.
+Preventing DDoS Attacks:
+Rate Limiting: Restrict the number of requests per client within a time window.
+
+Example (Express):
+javascript
+Copy code
+import rateLimit from 'express-rate-limit';
+const limiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 100, // Max requests per minute
+  message: 'Too many requests. Try again later.',
+});
+app.use(limiter);
+Traffic Monitoring & Anomaly Detection: Monitor traffic patterns to detect unusual spikes.
+
+Web Application Firewall (WAF): Filters malicious traffic at the application layer.
+
+CDN (Content Delivery Network): Distributes traffic across multiple servers, reducing load on the origin server.
+
+Geofencing: Block traffic from regions not relevant to your user base.
+
+Auto-scaling: Automatically scale resources in response to increased traffic.
+
+Blackhole Routing & Traffic Filtering: Drop malicious traffic before it reaches your servers.
+
+Anycast Network: Routes traffic to multiple servers globally, dispersing DDoS traffic.
+
+# Point 9 CLUSTERING IN NODEJS
+Node.js runs in a single-threaded event loop, meaning it can handle multiple requests simultaneously but only on one thread. This works well for I/O-heavy operations (e.g., web servers, databases), but for CPU-intensive tasks (e.g., heavy computation, data processing), a single-threaded model can be a bottleneck.
+
+To leverage multi-core systems and make full use of your server's hardware, Node.js clustering allows you to spawn multiple child processes (workers), each of which runs on a separate CPU core, while the master process acts as the coordinator.
+
+This approach allows your application to handle more requests concurrently by distributing the workload across multiple processes, effectively scaling your app without needing to deploy it across multiple machines.
+
+How Clustering Works in Node.js
+Master Process: This is the main process. It runs the application, but it does not handle the requests itself. Instead, it forks multiple worker processes.
+Worker Processes: Each worker is a copy of the main application and runs in its own thread. Each worker handles requests independently, taking advantage of multi-core systems.
+Load Balancing: The OS’s load balancer automatically distributes incoming requests to the worker processes, which can run on different CPU cores.
+
+import express from "express";
+import cluster from "cluster";
+import os from "os";
+import mongoose from "mongoose";
+
+const numCPUs = os.cpus().length; // Get the number of CPU cores
+
+if (cluster.isMaster) {
+  // Master process: Fork workers for each CPU core
+  console.log(`Master process is running on pid ${process.pid}`);
+
+  // Fork workers
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork(); // Creates a worker process
+  }
+
+  cluster.on("exit", (worker, code, signal) => {
+    console.log(`Worker ${worker.process.pid} died`);
+    // If a worker dies, fork a new one
+    cluster.fork();
+  });
+} else {
+  // Worker process: Set up the app to handle requests
+  const app = express();
+
+  // Basic route
+  app.get("/", (req, res) => {
+    res.send("Hello from Worker!");
+  });
+
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`Worker process ${process.pid} is running on port ${PORT}`);
+  });
+}
+Explanation:
+cluster.isMaster: This check determines if the current process is the master process. If it is, the master process will fork worker processes for each CPU core available (using cluster.fork()).
+
+Forking Worker Processes: Each worker process is an instance of your Express app, and they handle requests independently. Each worker process listens on the same port.
+
+Master Process Responsibilities:
+
+It forks worker processes to run on multiple cores.
+It listens for exit events to restart workers if they crash, ensuring high availability.
+Worker Process Responsibilities:
+
+Each worker runs the same Express app.
+Workers handle the HTTP requests and return responses.
+How Load Balancing Works
+In a clustered environment:
+
+The operating system’s load balancer automatically distributes incoming requests between the available workers.
+Each worker runs in its own process, so each can independently handle incoming requests.
+Since there are multiple processes, your app can handle more requests at once, especially if the server has multiple CPU cores.
+Benefits of Clustering:
+Increased Throughput: Multiple workers running on different CPU cores can handle more requests concurrently.
+Fault Tolerance: If a worker crashes, the master process can spawn a new worker to replace it, ensuring the app remains up and running.
+Better Performance: By distributing tasks to multiple processes, Node.js can handle both I/O-bound and CPU-bound tasks more effectively.
+
+# Point 10 APPLICATION LEVEL AND ROUTE LEVEL MIDDLEWARE 
+
+Application-Level Middleware
+This type of middleware applies globally to all routes in the application. It’s used for tasks like logging, body parsing, and error handling.
+
+Example:
+javascript
+Copy code
+const express = require('express');
+const app = express();
+
+// Application-level middleware (logs all requests)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+// Body parser middleware
+app.use(express.json());
+
+app.get('/', (req, res) => {
+  res.send('Hello World');
+});
+
+app.listen(3000, () => console.log('Server running on port 3000'));
+Route-Level Middleware
+This middleware is applied to specific routes. It’s useful for tasks like authentication or validation for certain endpoints.
+
+Example:
+javascript
+Copy code
+const express = require('express');
+const app = express();
+
+// Route-level middleware for authentication
+function isAuthenticated(req, res, next) {
+  if (req.headers['authorization'] === 'secret') {
+    next();
+  } else {
+    res.status(401).send('Unauthorized');
+  }
+}
+
+// Only the /protected route uses the isAuthenticated middleware
+app.get('/protected', isAuthenticated, (req, res) => {
+  res.send('Protected Route');
+});
+
+app.listen(3000, () => console.log('Server running on port 3000'));
+Key Points:
+Application-Level Middleware: Runs for every request (app.use()).
+Route-Level Middleware: Runs for specific routes (app.get(), app.post(), etc.).
+
+# Point 11 EXPRESS ROUTER 
+
+In Express, a router is an object that is used to define and manage routes separately from the main application. It allows you to organize your routes into smaller, modular pieces. Each router can handle requests for specific paths and HTTP methods (GET, POST, etc.).
+
+Key Points:
+Modular Routing: Instead of defining all routes in a single file, you can use routers to group related routes together.
+Mountable: Routers can be mounted on specific paths, making them reusable across different parts of the application.

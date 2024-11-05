@@ -1,6 +1,6 @@
 import { validationResult, body } from "express-validator";
 import userModel from "../model/userModel.mjs";
-import { hash } from "bcrypt";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 // Define the validation rules
@@ -39,7 +39,7 @@ const createUser = async (req, res) => {
     }
 
     // Hash the password
-    const hashedPassword = await hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create a new user instance
     const newUser = {
@@ -69,15 +69,19 @@ const loginUser = async (req, res) => {
 
   try {
     // Check if user exists
-    const user = userModel.findOne({ email: email });
+    const user = await userModel.findOne({ email: email });
     if (!user) {
       return res.status(404).send({ status: false, message: "user not found" });
     }
 
+    // console.log("user", user);
+
     //  Verify password using bcrypt
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      return res.status(401).json({ message: "Invalid password" });
+      return res
+        .status(401)
+        .send({ status: false, message: "Invalid password" });
     }
 
     //  Generate JWT token
@@ -93,10 +97,9 @@ const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
-    user.accessToken = accessToken;
-    user.refreshToken = refreshToken;
+    
     // set access token in headers
-    res.setHeader("Authorization", `Bearer ${token}`);
+    res.setHeader("Authorization", `Bearer ${accessToken}`);
     // set refresh token in a secure, HttpOnly cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true, // can't be accessed via JavaScript
@@ -108,9 +111,11 @@ const loginUser = async (req, res) => {
     return res.status(200).send({
       status: true,
       message: "user logged in succesfully",
-      data: token,
+      accessToken,
+      refreshToken,
     });
   } catch (err) {
+    // console.log("err", err);
     return res
       .status(500)
       .json({ status: false, message: "Internal server error" });
@@ -120,7 +125,9 @@ const loginUser = async (req, res) => {
 const refreshAccessToken = async (req, res) => {
   try {
     // get refresh token from cookies
+
     const refreshToken = req.cookies.refreshToken;
+    // console.log("refreshToken", refreshToken);
     if (!refreshToken) {
       return res
         .status(403)
@@ -129,10 +136,12 @@ const refreshAccessToken = async (req, res) => {
 
     // verify the refresh token
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    // console.log("decoded", decoded);
 
     // check if the user exists based on the decoded data
     const user = await userModel.findOne({ email: decoded.username });
-    if (!user || user.refreshToken !== refreshToken) {
+    // console.log("user", user);
+    if (!user) {
       return res
         .status(403)
         .send({ status: false, message: "Invalid refresh token" });
