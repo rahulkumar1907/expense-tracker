@@ -6,8 +6,7 @@ import cookieParser from "cookie-parser";
 import { createClient } from "redis";
 import rateLimit from "express-rate-limit";
 import winston from "winston";
-// import cluster from "cluster";
-// import os from "os";
+
 
 dotenv.config();
 
@@ -15,6 +14,27 @@ const app = express();
 app.use(cookieParser());
 // Middleware to parse JSON bodies
 app.use(express.json());
+const logDir = './logs'; // Assuming the 'logs' directory exists in the same directory as the app
+
+// Configure Winston logger with debug level and detailed logging format
+const logger = winston.createLogger({
+  level: "debug", // Change the level to "debug" to capture more detailed logs
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      ),
+    }),
+    new winston.transports.File({
+      filename: `${logDir}/app.log`, // Write logs to the predefined log directory
+      format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.json()
+      ),
+    }),
+  ],
+});
 
 // Initialize Redis client
 const client = createClient({
@@ -28,20 +48,20 @@ const client = createClient({
 client
   .connect()
   .then(() => {
-    console.log("Connected to Redis server");
+    logger.info("Connected to Redis server");
   })
   .catch((err) => {
-    console.error("Failed to connect to Redis:", err);
+    logger.error("Failed to connect to Redis:", err);
   });
 
 // MongoDB connection
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log("MongoDB connected");
+    logger.info("MongoDB connected");
   })
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
+    logger.error("MongoDB connection error:", err);
   });
 
 // Rate limiting using express-rate-limit
@@ -50,32 +70,46 @@ const limiter = rateLimit({
   max: 100, // Limit each IP to 100 requests per window
   message: "Too many requests, please try again later.",
   handler: (req, res) => {
-    // Log rate limiting attempts to Redis (for spike detection)
     const userIp = req.ip;
+    const method = req.method;
+    const url = req.originalUrl;
+    const timestamp = new Date().toISOString();
+
+    // Log request details when rate-limiting is triggered
+    logger.debug(
+      `Rate limit triggered - IP: ${userIp}, Method: ${method}, URL: ${url}, Time: ${timestamp}`
+    );
+
     client.incr(`rate-limit:${userIp}`).then(() => {
-      console.log(`Rate limit triggered for IP: ${userIp}`);
+      logger.warn(
+        `Rate limit exceeded for IP: ${userIp}, Method: ${method}, URL: ${url}`
+      );
     });
-    return res.status(429).send("Too many requests, please try again later.");
+
+    res.status(429).send("Too many requests, please try again later.");
   },
 });
 
 // Apply rate limiting middleware globally
 app.use(limiter);
 
-// Debugging and logging using winston
-const logger = winston.createLogger({
-  level: "info",
-  transports: [
-    new winston.transports.Console({ format: winston.format.simple() }),
-    new winston.transports.File({
-      filename: "logs/app.log",
-      format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.json()
-      ),
-    }),
-  ],
-});
+// Monitor Redis for spikes
+const monitorRateLimiting = () => {
+  setInterval(async () => {
+    // Example logic: Check the last 10 minutes for IPs that have hit the rate limit often
+    const keys = await client.keys("rate-limit:*");
+    for (const key of keys) {
+      const count = await client.get(key);
+      if (parseInt(count) > 10) {
+        // Detecting spikes (more than 10 requests)
+        logger.warn(`Spike detected for IP: ${key} with ${count} requests`);
+      }
+    }
+  }, 60000); // Run every minute
+};
+
+// Start monitoring spikes
+monitorRateLimiting();
 
 // Use user routes
 app.use("/api", userRoutes);
@@ -103,21 +137,5 @@ const PORT = process.env.PORT || 4000;
 
 // single instance
 app.listen(PORT, () => {
-  console.log(`Worker ${process.pid} is running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });
-
-// Monitor Redis for spikes
-const monitorRateLimiting = () => {
-  setInterval(async () => {
-    // Example logic: Check the last 10 minutes for IPs that have hit the rate limit often
-    const keys = await client.keys("rate-limit:*");
-    for (const key of keys) {
-      const count = await client.get(key);
-      if (count > 10) {
-        logger.warn(`Spike detected for IP: ${key} with ${count} requests`);
-      }
-    }
-  }, 60000); // Run every minute
-};
-
-monitorRateLimiting();
