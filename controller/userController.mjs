@@ -3,6 +3,10 @@ import userModel from "../model/userModel.mjs";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+import multer from "multer";
+// import AWS from 'aws-sdk';
+import { uploadVideoToS3 } from './videoUploadController.mjs';
+
 // Define the validation rules
 const validateUser = [
   body("name").notEmpty().withMessage("Name is required").trim(),
@@ -97,7 +101,7 @@ const loginUser = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
     );
-    
+
     // set access token in headers
     res.setHeader("Authorization", `Bearer ${accessToken}`);
     // set refresh token in a secure, HttpOnly cookie
@@ -168,5 +172,36 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
+// Use multer's memory storage to store files in memory
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage }).single("video"); // 'video' is the field name in the form-data
+
+// POST route for video upload
+const videoUpload = async (req, res) => {
+  // Check if a file is uploaded
+  if (!req.file) {
+    return res
+      .status(400)
+      .send({ status: false, message: "No file uploaded." });
+  }
+
+  try {
+    // Call the uploadVideoToS3 function to upload the video to S3
+    const s3Response = await uploadVideoToS3(req.file);
+
+    // Return the S3 URL to the client
+    return res.status(200).send({
+      status: true,
+      message: "video uploaded successfully!",
+      videoUrl: s3Response.Location, // The URL of the uploaded video from S3
+    });
+  } catch (err) {
+    console.error("Error uploading video:", err);
+    return res
+      .status(500)
+      .send({ status: false, message: "Internal server error" });
+  }
+};
+
 // Export the validation rules and the createUser function
-export { validateUser, createUser, loginUser, refreshAccessToken };
+export { validateUser, createUser, loginUser, refreshAccessToken, videoUpload };

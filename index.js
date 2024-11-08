@@ -7,14 +7,13 @@ import { createClient } from "redis";
 import rateLimit from "express-rate-limit";
 import winston from "winston";
 
-
 dotenv.config();
 
 const app = express();
 app.use(cookieParser());
 // Middleware to parse JSON bodies
 app.use(express.json());
-const logDir = './logs'; // Assuming the 'logs' directory exists in the same directory as the app
+const logDir = "./logs"; // Assuming the 'logs' directory exists in the same directory as the app
 
 // Configure Winston logger with debug level and detailed logging format
 const logger = winston.createLogger({

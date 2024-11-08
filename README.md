@@ -355,3 +355,231 @@ In Express, a router is an object that is used to define and manage routes separ
 Key Points:
 Modular Routing: Instead of defining all routes in a single file, you can use routers to group related routes together.
 Mountable: Routers can be mounted on specific paths, making them reusable across different parts of the application.
+
+# Point 12 MONGODB SHARDING ADVANCED 
+
+What is MongoDB Sharding?
+Sharding in MongoDB involves splitting data across multiple machines. MongoDB sharding involves several key components:
+
+Shard:
+
+A shard is a MongoDB server or replica set that holds a subset of the dataset. Each shard holds part of the data and can be independently scaled.
+Config Servers:
+
+Config Servers store metadata about the sharded cluster, such as the distribution of data across shards, chunk sizes, and shard keys. The config servers keep track of how data is split between shards.
+Mongos:
+
+Mongos is the routing service that directs client requests to the appropriate shard based on the shard key. When you query data in a sharded MongoDB setup, Mongos figures out which shard has the data and routes the query there.
+Shard Key:
+
+The shard key is a field or set of fields that determines how data is distributed across shards. MongoDB uses the shard key to partition data into "chunks" and distribute those chunks across different shards.
+Chunks:
+
+MongoDB divides the data in the collection into chunks, each containing a subset of the data. These chunks are distributed across the shards.
+Balancing:
+
+MongoDB automatically balances the chunks across the shards, ensuring that no single shard becomes overloaded with data. The balancer moves chunks between shards as needed to ensure a balanced workload.
+How MongoDB Sharding Works (in Steps)
+Sharding Setup:
+
+You set up a sharded cluster with multiple shards, a set of config servers, and Mongos routers.
+Choose a shard key for your collection. This is critical because it determines how the data is distributed.
+Data Distribution:
+
+MongoDB divides your data based on the shard key into chunks. Each chunk is stored on a different shard.
+The distribution of the chunks across shards happens automatically, and MongoDB ensures data is distributed in a way that prevents a single shard from becoming a bottleneck.
+Query Routing:
+
+When an application (e.g., a Node.js app) issues a query, it is sent to a Mongos router.
+The Mongos router uses the shard key to route the query to the correct shard.
+If the query doesn't include the shard key, the query will be sent to all shards (a scatter-gather query), which is less efficient but sometimes necessary for certain operations.
+Data Balancing:
+
+MongoDB automatically balances data across shards, ensuring that chunks are evenly distributed, so no single shard is overloaded.
+Example of MongoDB Sharding Configuration in Node.js
+In Node.js, the interaction with a sharded MongoDB cluster is very similar to how you'd interact with a non-sharded cluster. The difference is that the Mongos router directs the queries to the appropriate shard.
+
+Here’s how you can interact with a sharded MongoDB cluster in a Node.js application:
+
+1. Install MongoDB Node.js Driver
+First, install the MongoDB Node.js driver:
+
+bash
+Copy code
+npm install mongodb
+2. Connect to the Sharded Cluster
+You can use the MongoDB Node.js driver to connect to the sharded MongoDB cluster. Assuming you have Mongos running, you can connect as follows:
+
+javascript
+Copy code
+const { MongoClient } = require('mongodb');
+
+// MongoDB URI for a sharded cluster (Mongos is used for routing)
+const uri = 'mongodb://mongos_router:27017';
+
+async function connectToShardedCluster() {
+  const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
+
+  try {
+    await client.connect();
+    console.log('Connected to MongoDB sharded cluster');
+    const database = client.db('mydatabase');
+    const collection = database.collection('mycollection');
+
+    // Example: Inserting data into the sharded collection
+    const result = await collection.insertOne({ name: 'Alice', age: 30 });
+    console.log('Document inserted:', result.insertedId);
+  } catch (err) {
+    console.error('Error connecting to MongoDB:', err);
+  } finally {
+    await client.close();
+  }
+}
+
+connectToShardedCluster();
+In this example:
+
+You use the MongoClient to connect to the Mongos router (mongodb://mongos_router:27017), which will route the query to the correct shard.
+You can perform operations (e.g., insertOne) as usual, and MongoDB will manage the sharding behind the scenes.
+3. Sharding a Collection with a Shard Key
+To enable sharding for a collection and choose a shard key, you would typically do this on the MongoDB shell, not directly in the application code. Here's how you can enable sharding and choose a shard key using the MongoDB shell:
+
+Enable sharding for the database:
+
+javascript
+Copy code
+sh.enableSharding("mydatabase");
+Shard the collection with a shard key:
+
+javascript
+Copy code
+sh.shardCollection("mydatabase.mycollection", { "age": 1 });
+In the above example, we’ve chosen age as the shard key, meaning the data will be distributed based on the age field.
+
+Interview Questions for MongoDB Sharding
+Here are some common interview questions related to MongoDB sharding that you might face:
+
+What is MongoDB sharding?
+
+Sharding is the process of distributing data across multiple machines. It is used to handle large datasets and provide horizontal scalability.
+What are the components of a sharded MongoDB cluster?
+
+A sharded cluster consists of:
+Shards: Individual MongoDB servers or replica sets that hold data.
+Config servers: Store metadata about the sharded cluster.
+Mongos: A routing service that directs client queries to the appropriate shard.
+What is a shard key, and why is it important?
+
+The shard key is the field or set of fields that MongoDB uses to partition the data across shards. It is critical for determining how data is distributed and how queries are routed.
+What are chunks in MongoDB sharding?
+
+Data in MongoDB is split into chunks. Each chunk contains a subset of the data, and these chunks are distributed across shards.
+How does MongoDB handle balancing data across shards?
+
+MongoDB automatically moves chunks between shards to balance the load and ensure that no shard becomes overloaded.
+What are the benefits of sharding in MongoDB?
+
+Horizontal scaling: Distributes data across multiple servers, improving the ability to scale.
+High availability: Using replica sets in shards provides redundancy and failover.
+Improved performance: Sharding can improve read/write performance by distributing the load.
+What are some challenges or limitations of sharding in MongoDB?
+
+Choosing the wrong shard key can lead to uneven data distribution and poor performance.
+Scatter-gather queries: If the shard key is not provided in the query, MongoDB needs to query all shards, which can be inefficient.
+Operational complexity: Managing a sharded cluster requires more operational overhead compared to a single node.
+When would you use sharding in MongoDB?
+
+When your dataset exceeds the size that a single server can handle.
+When you need to improve the performance of read and write operations by distributing the load.
+When you need to scale horizontally as your application grows.
+
+# 13 HOW DYNAMODB STREAM WORKS
+How DynamoDB Streams Work Internally
+Amazon DynamoDB Streams is a feature of DynamoDB that captures and records changes made to items in your DynamoDB tables. It allows you to react to changes in real-time, process data asynchronously, and replicate or integrate with other systems.
+
+DynamoDB Streams can be enabled for any DynamoDB table and tracks the following changes:
+
+Insertions: When a new item is added.
+Updates: When an existing item is updated.
+Deletions: When an item is deleted.
+These changes are captured in a stream, which is a time-ordered sequence of events. The stream allows you to capture, analyze, and respond to changes in your DynamoDB tables. DynamoDB Streams are highly reliable and automatically scale to meet the throughput needs of your application.
+
+Key Concepts of DynamoDB Streams
+Stream Records: Each change in a DynamoDB table generates a stream record, which contains the details of the change (e.g., the old and new values of the item). A stream record represents a single data modification event.
+
+Stream View Types: When configuring DynamoDB Streams, you can specify a stream view type. This controls what data is included in the stream record. The available options are:
+
+KEYS_ONLY: Only the primary key attributes are recorded.
+NEW_IMAGE: The entire item, as it appeared after the modification, is recorded.
+OLD_IMAGE: The entire item, as it appeared before the modification, is recorded.
+NEW_AND_OLD_IMAGES: Both the new and old versions of the item are recorded.
+Stream Shards: DynamoDB Streams are divided into multiple shards for horizontal scalability. Each stream shard contains a sequence of events (stream records). When a table experiences high write throughput, DynamoDB divides the stream into multiple shards to handle the load efficiently.
+
+Sequence Numbers: Each stream record has a sequence number, which is a unique identifier for the event within a shard. This ensures the ordering of events within a shard.
+
+Eventual Consistency: DynamoDB Streams provide eventual consistency for records. This means that when an item is modified, it may take some time for the record to appear in the stream.
+
+How DynamoDB Streams Work Internally
+DynamoDB Streams work by maintaining an append-only log of changes (inserts, updates, deletes) made to items in a DynamoDB table. These logs are stored in shards and are available for up to 24 hours after the changes occur. Below is an overview of the internal workings:
+
+1. DynamoDB Table Modifications
+When an operation is performed on a DynamoDB table (such as PutItem, UpdateItem, or DeleteItem), DynamoDB records the change in the DynamoDB Stream.
+
+For PutItem, the stream captures the full item that was inserted (depending on the stream view type).
+For UpdateItem, the stream captures either the new image or both the old and new images (again depending on the stream view type).
+For DeleteItem, the stream captures the old image (the item as it appeared before deletion).
+2. Stream Shards and Sequence Numbers
+Once the modification is captured in the stream, DynamoDB assigns the event a sequence number. The event is then placed into a shard within the stream. Each shard contains a series of records, and these records are ordered by their sequence number.
+
+Events in a stream are ordered, but they are not guaranteed to be ordered across shards.
+When the table experiences a high volume of write traffic, DynamoDB can scale the stream by creating more shards to distribute the load.
+3. Stream Records
+A stream record contains the following key elements:
+
+Event ID: A unique identifier for the stream record.
+Event Name: The type of operation (INSERT, MODIFY, REMOVE).
+Event Source: The source of the event (for DynamoDB streams, this is always aws:dynamodb).
+Event Version: The version of the stream event.
+AWS Region: The AWS region where the DynamoDB table resides.
+DynamoDB Table Name: The table where the change occurred.
+Timestamp: The time when the event was generated.
+Change Data: Depending on the stream view type, this can include:
+New Image: The state of the item after the change.
+Old Image: The state of the item before the change.
+Keys Only: Only the primary key attributes of the modified item.
+4. Stream Consumers
+Stream consumers are applications or services that process the data from the DynamoDB Streams. Typically, you use AWS Lambda, Kinesis Data Streams, or other custom applications to consume these streams.
+
+AWS Lambda: You can configure a Lambda function to automatically be triggered whenever a new record appears in the stream. This is an event-driven architecture that can be used for various use cases, such as auditing, replication, or triggering downstream processing.
+
+Kinesis Data Streams: You can stream DynamoDB data to Amazon Kinesis to enable real-time data streaming and analytics.
+
+Custom Consumers: You can also build your own applications to process DynamoDB Streams using the GetRecords API.
+
+5. Retaining Stream Records
+DynamoDB Streams stores the records for up to 24 hours. After that, the data is removed, so consumers need to process the data within this retention period.
+
+6. Stream Processing Flow
+The typical flow of processing DynamoDB Streams looks like this:
+
+Data Modification: An insert, update, or delete operation occurs on a DynamoDB table.
+Stream Record Generation: The modification is captured in the stream with relevant information (keys, images).
+Stream Shard Assignment: The record is placed into a shard, with a unique sequence number.
+Stream Consumer (Lambda/Kinesis): The consumer reads the stream records and processes them. This could involve storing the data in another system, performing data transformation, or triggering additional workflows.
+Data Retention: The stream records are available for up to 24 hours. After that, they are purged from the stream.
+DynamoDB Stream Use Cases
+Real-Time Analytics: DynamoDB Streams can be used to trigger real-time analytics when changes are made to data in the table. For example, if an e-commerce application records user orders in DynamoDB, you can process these events using streams to update an analytics dashboard in real-time.
+
+Replication: You can use DynamoDB Streams for cross-region replication, ensuring that changes in one DynamoDB table are automatically reflected in another table, either in the same region or in a different region.
+
+Data Pipelines: DynamoDB Streams can be integrated into data pipelines. For example, stream data to Kinesis for processing by a data analytics platform, or trigger a Lambda function to clean and load data into an S3 bucket.
+
+Event-Driven Architecture: You can use DynamoDB Streams with AWS Lambda to trigger downstream actions. For example, a Lambda function can be invoked to process payments, send notifications, or update a search index whenever an item is updated or deleted in DynamoDB.
+
+Audit and Change Tracking: DynamoDB Streams can be used to track all changes made to a table for auditing purposes. For example, you could create an immutable log of all updates to sensitive data, and store these logs in an S3 bucket.
+
+Conclusion
+DynamoDB Streams allows you to capture real-time changes to your DynamoDB tables and process them asynchronously. It is highly useful for building event-driven architectures, enabling replication, analytics, auditing, and more. Understanding how DynamoDB Streams work — from table modifications to stream record creation and retention — allows you to use this powerful feature in your applications effectively.
