@@ -108,7 +108,7 @@ function onStreamEnd() {
   // You can perform other actions here if needed, such as logging, database updates, etc.
 }
 
-export function streamVideo(req, res) {
+export async function streamVideo(req, res) {
   const bucketName = process.env.AWS_S3_BUCKET_NAME; // Replace with your S3 bucket name
   const videoKey =
     "videos/1731049902587-MongoDB vs DynamoDB in Under 2 Mins.mp4"; // Replace with your S3 object key
@@ -118,22 +118,15 @@ export function streamVideo(req, res) {
   res.setHeader("Content-Disposition", 'inline; filename="video.mp4"'); // You can change 'inline' to 'attachment' for download
   res.setHeader("Accept-Ranges", "bytes"); // Allow byte-range requests (for seeking)
 
-  // Get the video object metadata to set the Content-Length header and handle byte-range requests
+  // Define the parameters to fetch the video metadata
   const params = {
     Bucket: bucketName,
     Key: videoKey,
   };
 
-  // Fetch the metadata first to get the video size
-  s3.headObject(params, (err, metadata) => {
-    if (err) {
-      console.error("Error getting video metadata:", err);
-      return res.status(500).send({
-        status: false,
-        message: "Error retrieving video metadata from S3.",
-      });
-    }
-
+  try {
+    // Fetch the metadata for the video file (content length)
+    const metadata = await s3.headObject(params).promise();
     const videoSize = metadata.ContentLength;
 
     // Set the Content-Length header so the client knows the size of the file
@@ -179,5 +172,12 @@ export function streamVideo(req, res) {
         .status(500)
         .send({ status: false, message: "Error streaming the video from S3." });
     });
-  });
+  } catch (err) {
+    // Catch errors from headObject (such as access issues or missing file)
+    console.error("Error getting video metadata:", err);
+    res.status(500).send({
+      status: false,
+      message: "Error retrieving video metadata from S3.",
+    });
+  }
 }
