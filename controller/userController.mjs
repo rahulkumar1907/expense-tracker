@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 
 import multer from "multer";
 // import AWS from 'aws-sdk';
-import { uploadVideoToS3 } from './videoUploadController.mjs';
+import { uploadVideoToS3 } from "./videoUploadController.mjs";
 
 // Define the validation rules
 const validateUser = [
@@ -184,16 +184,33 @@ const videoUpload = async (req, res) => {
       .status(400)
       .send({ status: false, message: "No file uploaded." });
   }
-
+  const { userId } = req.params;
+  if (!userId) {
+    return res
+      .status(400)
+      .send({ status: false, message: "User ID is required." });
+  }
   try {
+    const user = await userModel.findById({ _id: userId });
+
+    if (!user) {
+      return res
+        .status(404)
+        .send({ status: false, message: "user not found." });
+    }
     // Call the uploadVideoToS3 function to upload the video to S3
     const s3Response = await uploadVideoToS3(req.file);
-
+    const updatedUser = await userModel.findOneAndUpdate(
+      { _id: userId },
+      { $set: { lastUploadedVideo: s3Response.Location } }, // Update the field (you can also add more fields here)
+      { new: true } // Return the updated user document
+    );
     // Return the S3 URL to the client
     return res.status(200).send({
       status: true,
       message: "video uploaded successfully!",
       videoUrl: s3Response.Location, // The URL of the uploaded video from S3
+      updatedUser: updatedUser,
     });
   } catch (err) {
     console.error("Error uploading video:", err);

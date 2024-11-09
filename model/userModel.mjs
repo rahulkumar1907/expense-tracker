@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["Mr", "Mrs", "Miss"],
     },
+    lastUploadedVideo: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true } // This option adds createdAt and updatedAt fields automatically
 );
